@@ -1,91 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Crowdfunding DApp</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background-color: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .card {
-      background: white;
-      padding: 40px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
-      border-radius: 10px;
-      width: 300px;
-    }
-    input {
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      box-sizing: border-box;
-      margin-top: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin-top: 20px;
-      cursor: pointer;
-      width: 100%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Crowdfunding DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-radius: 10px;
+            width: 350px;
+        }
+
+        img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin: 10px 0;
+        }
+
+        h3 {
+            margin: 5px 0;
+        }
+
+        p {
+            margin-top: 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+    </style>
 </head>
+
 <body>
-  <div class="card">
-    <h2>Support Our Project</h2>
-    <input id="ethInput" type="number" step="0.0001" placeholder="Amount in ETH" />
-    <button onclick="contribute()">Continue</button>
-  </div>
+    <div class="card">
+        <img src="blockchainimage.png" alt="Crowdfunding">
+        <h2>Cmp 619 - Blockchain and Cryptocurrencies</h2>
+        <h2>Crowdfunding DApp</h2>
+        <h3>Support Our Project</h3>
+        <h3>Please Send Us Ether :)</h3>
+        <p id="fundingProgress" style="margin-top: 25px;">0 / 1 ETH</p>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        </div>
+        <input id="ethInput" type="number" step="0.0001" placeholder="Amount in ETH" />
+        <button onclick="contribute()">Fund</button>
+    </div>
 
-  <script>
-    const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE"; // Sepolia adresinle değiştir
-    const abi = [
-      {
-        "inputs": [],
-        "name": "contribute",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-      }
-    ];
+    <script>
+        const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE"; // <- replace with actual deployed address
+        const goalEth = 1; // <- match the goal in your Solidity contract
+        const abi = [
+            {
+                "inputs": [],
+                "name": "contribute",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getBalance",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
 
-    async function contribute() {
-      const ethAmount = document.getElementById("ethInput").value;
+        async function updateProgress() {
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const contract = new ethers.Contract(contractAddress, abi, provider);
 
-      if (!ethAmount || isNaN(ethAmount) || parseFloat(ethAmount) <= 0) {
-        alert("Please enter a valid ETH amount.");
-        return;
-      }
+                const balanceWei = await contract.getBalance();
+                const balanceEth = parseFloat(ethers.utils.formatEther(balanceWei));
+                const percent = Math.min((balanceEth / goalEth) * 100, 100);
 
-      if (typeof window.ethereum === "undefined") {
-        alert("Please install MetaMask.");
-        return;
-      }
+                document.getElementById("fundingProgress").textContent = `${balanceEth.toFixed(4)} / ${goalEth} ETH`;
+                document.getElementById("progressFill").style.width = `${percent}%`;
+            } catch (err) {
+                console.error("Failed to update progress", err);
+            }
+        }
 
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, abi, signer);
+        async function contribute() {
+            const ethAmount = document.getElementById("ethInput").value;
 
-      try {
-        const tx = await contract.contribute({
-          value: ethers.utils.parseEther(ethAmount)
-        });
-        await tx.wait();
-        alert("Thank you for your contribution!");
-      } catch (err) {
-        console.error(err);
-        alert("Transaction failed.");
-      }
-    }
-  </script>
+            if (!ethAmount || isNaN(ethAmount) || parseFloat(ethAmount) <= 0) {
+                alert("Please enter a valid ETH amount.");
+                return;
+            }
+
+            if (typeof window.ethereum === "undefined") {
+                alert("Please install MetaMask.");
+                return;
+            }
+
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            await signer.getAddress();
+
+            const contract = new ethers.Contract(contractAddress, abi, signer);
+
+            try {
+                const tx = await contract.contribute({
+                    value: ethers.utils.parseEther(ethAmount)
+                });
+                await tx.wait();
+                alert("Thank you for your contribution!");
+                updateProgress();
+            } catch (err) {
+                console.error(err);
+                alert("Transaction failed.");
+            }
+        }
+
+        window.addEventListener("load", updateProgress);
+    </script>
 </body>
+
 </html>
