@@ -87,6 +87,7 @@
         <h2>Crowdfunding DApp</h2>
         <h3>Support Our Project</h3>
         <h3>Please Send Us Ether :)</h3>
+	<p id="deadlineDisplay">Deadline: Loading...</p>
         <p id="fundingProgress" style="margin-top: 25px;">0 / 1 ETH</p>
         <div class="progress-bar">
             <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
@@ -215,21 +216,25 @@
 	}
 ];
 
-        async function updateProgress() {
-            try {
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const contract = new ethers.Contract(contractAddress, abi, provider);
+	async function updateProgress() {
+    		try {
+        		const provider = new ethers.providers.Web3Provider(window.ethereum);
+        		const contract = new ethers.Contract(contractAddress, abi, provider);
 
-                const balanceWei = await contract.getBalance();
-                const balanceEth = parseFloat(ethers.utils.formatEther(balanceWei));
-                const percent = Math.min((balanceEth / goalEth) * 100, 100);
+        		const balanceWei = await contract.getBalance();
+        		const balanceEth = parseFloat(ethers.utils.formatEther(balanceWei));
+        		const percent = Math.min((balanceEth / goalEth) * 100, 100);
 
-                document.getElementById("fundingProgress").textContent = `${balanceEth.toFixed(4)} / ${goalEth} ETH`;
-                document.getElementById("progressFill").style.width = `${percent}%`;
-            } catch (err) {
-                console.error("Failed to update progress", err);
-            }
-        }
+        		document.getElementById("fundingProgress").textContent = `${balanceEth.toFixed(4)} / ${goalEth} ETH`;
+        		document.getElementById("progressFill").style.width = `${percent}%`;
+
+        		const deadline = await contract.deadline();
+        		const deadlineDate = new Date(parseInt(deadline.toString()) * 1000);
+        		document.getElementById("deadlineDisplay").textContent = `Deadline: ${deadlineDate.toLocaleString()}`;
+    		} catch (err) {
+        		console.error("Failed to update progress", err);
+    		}
+	}
 
         async function contribute() {
             const ethAmount = document.getElementById("ethInput").value;
