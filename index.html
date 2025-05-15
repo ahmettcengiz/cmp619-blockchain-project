@@ -229,8 +229,9 @@
         		document.getElementById("progressFill").style.width = `${percent}%`;
 
         		const deadline = await contract.deadline();
-        		const deadlineDate = new Date(parseInt(deadline.toString()) * 1000);
-        		document.getElementById("deadlineDisplay").textContent = `Deadline: ${deadlineDate.toLocaleString()}`;
+			const deadlineDate = new Date(parseInt(deadline.toString()) * 1000);
+			document.getElementById("deadlineDisplay").textContent = `Deadline: ${deadlineDate.toLocaleString("tr-TR")}`;
+
     		} catch (err) {
         		console.error("Failed to update progress", err);
     		}
